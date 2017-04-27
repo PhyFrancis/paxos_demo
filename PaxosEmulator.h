@@ -5,6 +5,7 @@
 
 #include "Node.h"
 #include "Message.h"
+#include "SequenceNumberProvider.h"
 
 class PaxosEmulator {
  private:
