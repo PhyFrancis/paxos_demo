@@ -12,7 +12,7 @@ enum MessageType {
   ACCEPTED,
 };
 
-static const std::string MessageTypeStrings[] = {
+static const std::string MessageTypeString[] = {
   "PROPOSE",
   "PROMISE",
   "ACCEPT",
@@ -28,7 +28,15 @@ struct Message {
 
   std::string messageSentLog() {
     std::ostringstream logStream;
-    logStream << "Sent a " << toString() << " messgae to Node " << to.toString();
+    logStream << "Node" << from.toString() << " sent a " << toString()
+              << " messgae to Node " << to.toString();
+    return logStream.str();
+  }
+
+  std::string messageReceivedLog() {
+    std::ostringstream logStream;
+    logStream << "Node" << to.toString() << " received a " << toString()
+              << " messgae from Node " << from.toString();
     return logStream.str();
   }
 
@@ -36,13 +44,9 @@ struct Message {
    * @return ${type}:::${seq}:::${value}
    */
   std::string toString() {
-    std::string ret;
-    ret += MessageTypeStrings[type];
-    ret += ":::";
-    ret += sequenceNumber;
-    ret += ":::";
-    ret += value;
-    return ret;
+    std::ostringstream info;
+    info << MessageTypeString[type] << ":::" << sequenceNumber << ":::" << value;
+    return info.str();
   }
 };
 

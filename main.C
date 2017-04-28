@@ -4,5 +4,7 @@
 using namespace std;
 
 int main() {
-  cout<<"Hello"<<endl;
+  PaxosEmulator emulator;
+  emulator.init(1);
+  emulator.startPaxos();
 }

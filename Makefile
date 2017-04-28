@@ -13,18 +13,16 @@ DFLAGS =
 #
 all:$(BIN)
 
-.SUFFIXES:  .o .C
-
-CXXSRC :=$(wildcard *.C)
+CXXSRC := $(filter-out main.C, $(wildcard *.C))
 
 CXXOBJ=$(CXXSRC:.C=.o)
 
 OBJS_SRC = $(CXXOBJ)
 OBJS := $(notdir $(OBJS_SRC))
 
-$(BIN):  $(OBJS)
+$(BIN):  $(OBJS) $(wildcard *.h)
 	@echo OBJS = $(OBJS)
-	$(CXX) $(OBJS) $(LDFLAGS) -o $(BIN)
+	$(CXX) main.C $(wildcard *.h) $(OBJS) $(LDFLAGS) -o $(BIN)
 
 .C.o:
 	$(CXX) -o $@ $(CXXFLAGS) $(DFLAGS) -c $(INCLIST) $<
