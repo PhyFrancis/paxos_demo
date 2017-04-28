@@ -3,6 +3,7 @@
 
 #include <iostream>
 #include <string>
+#include "SequenceNumberProvider.h"
 
 enum NodeState {
   IDLE,
@@ -16,9 +17,13 @@ class Node {
  private:
   const int id;
   NodeState state;
+  long currentTime;
+  long lastActiveTime;
+  SequenceNumberProvider &seqProvider;
 
  public:
-  Node(int _id) : id(_id), state(IDLE) {
+  Node(int _id, SequenceNumberProvider &_seqProvider)
+      : id(_id), state(IDLE), currentTime(0), lastActiveTime(0), seqProvider(_seqProvider) {
     std::cout << "Node " << toString() << " is created" << std::endl;
   }
 
@@ -28,6 +33,10 @@ class Node {
 
   bool isInPaxos() const {
     return state == IN_PAXOS;
+  }
+
+  void tickClock() {
+    currentTime++;
   }
 
   NodeState getState();

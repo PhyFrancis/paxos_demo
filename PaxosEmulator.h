@@ -12,10 +12,13 @@
 
 class PaxosEmulator {
  private:
-  std::vector<Node> nodes;
-  std::unordered_multimap<long, Message> messages;
   long currentTime;
+
+  std::vector<Node> nodes;
   int nodeCount;
+  std::unordered_multimap<long, Message> messages;
+
+  SequenceNumberProvider seqProvider;
 
   long getCurrentTime() {
     return currentTime;
@@ -30,11 +33,20 @@ class PaxosEmulator {
     return messages.size() == 0;
   }
 
+  void tickClock() {
+    for (Node& node : nodes) {
+      node.tickClock();
+    }
+    currentTime++;
+  }
+
   void runLoop() {
     if (runLoopEnds()) return;
-    std::cout << "Current time: " << getCurrentTime() << std::endl;
+
+    std::cout << "=== Current time: " << getCurrentTime() << " ===" << std::endl;
+
     std::this_thread::sleep_for(std::chrono::seconds(1));
-    currentTime++;
+    tickClock();
     runLoop();
   }
 
@@ -42,7 +54,7 @@ class PaxosEmulator {
   void init(int numNodes) {
     currentTime = 0;
     for (int i = 0; i < numNodes; i++) {
-      nodes.push_back(Node(i));
+      nodes.push_back(Node(i, seqProvider));
     }
     nodeCount = nodes.size();
   }
