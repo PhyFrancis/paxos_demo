@@ -54,7 +54,7 @@ class PaxosEmulator {
   void init(int numNodes) {
     currentTime = 0;
     for (int i = 0; i < numNodes; i++) {
-      nodes.push_back(Node(i, seqProvider));
+      nodes.push_back(Node(i, seqProvider, this));
     }
     nodeCount = nodes.size();
   }

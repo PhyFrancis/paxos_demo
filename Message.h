@@ -6,14 +6,14 @@
 #include <sstream>
 
 enum MessageType {
-  PROPOSE,
+  PREPARE,
   PROMISE,
   ACCEPT,
   ACCEPTED,
 };
 
 static const std::string MessageTypeString[] = {
-  "PROPOSE",
+  "PREPARE",
   "PROMISE",
   "ACCEPT",
   "ACCEPTED",
