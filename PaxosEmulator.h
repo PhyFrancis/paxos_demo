@@ -28,8 +28,9 @@ class PaxosEmulator {
 
   void maybePropose(Node &node) {
     if (node.shouldPropose()) {
+      int seqNum = seqProvider.get();
       for (Node &toNode : this->nodes) {
-        Message message(node.getId(), toNode.getId(), seqProvider.get(), PREPARE, node.toString());
+        Message message(node.getId(), toNode.getId(), seqNum, PREPARE, "");
         sendMessage(sometimeInFuture(), message);
       }
       node.resetTimeSinceLastPropose();

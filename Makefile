@@ -20,7 +20,7 @@ CXXOBJ=$(CXXSRC:.C=.o)
 OBJS_SRC = $(CXXOBJ)
 OBJS := $(notdir $(OBJS_SRC))
 
-$(BIN):  $(OBJS) $(wildcard *.h)
+$(BIN):  $(OBJS) $(wildcard *.h) main.C
 	@echo OBJS = $(OBJS)
 	$(CXX) main.C $(wildcard *.h) $(OBJS) $(LDFLAGS) -o $(BIN)
 

@@ -11,7 +11,7 @@
 #include <unordered_map>
 #include <map>
 
-#define PROPOSE_PROBABILITY 0.2
+#define PROPOSE_PROBABILITY 0.01
 
 enum NodeState {
   IDLE,
@@ -31,7 +31,7 @@ class Node {
   int highestPromisedSeq;
 
   // seqNum -> acceptedSeqNum-> acceptedValue
-  std::unordered_map<int, std::map<int, std::string> > receivedPromises;
+  std::unordered_map<int, std::multimap<int, std::string> > receivedPromises;
 
   // <seqNum, value>
   std::pair<long, std::string> latestAccepted;
@@ -86,6 +86,7 @@ class Node {
 
   Message receivePrepare(const Message &prepare) {
     assert(this->id == prepare.toId);
+    this->highestPromisedSeq = prepare.sequenceNumber;
     return Message::promiseMessage(
         this->id,
         prepare.fromId,
@@ -104,18 +105,18 @@ class Node {
   std::pair<int, std::string> receivePromise(const Message &promise) {
     int seqNum = promise.sequenceNumber;
     if (receivedPromises.find(seqNum) == receivedPromises.end()) {
-      receivedPromises[seqNum] = std::map<int, std::string>();
+      receivedPromises[seqNum] = std::multimap<int, std::string>();
     }
-    receivedPromises[seqNum][promise.acceptedSeqNum] = promise.acceptedValue;
+    receivedPromises[seqNum].insert(std::make_pair(promise.acceptedSeqNum, promise.acceptedValue));
     return std::make_pair(receivedPromises[seqNum].size(), receivedPromises[seqNum].cbegin()->second);
   }
 
   bool shouldAccept(const Message &accept) {
-    return accept.sequenceNumber > this->highestPromisedSeq;
+    return accept.sequenceNumber >= this->highestPromisedSeq;
   }
 
   Message receiveAccept(const Message &accept) {
-    assert(accept.sequenceNumber > this->highestPromisedSeq);
+    assert(accept.sequenceNumber >= this->highestPromisedSeq);
     assert(accept.toId == this->id);
     this->latestAccepted = std::make_pair(accept.sequenceNumber, accept.value);
     return Message::acceptedMessage(this->id, accept.fromId, accept.sequenceNumber, accept.value);
@@ -131,7 +132,7 @@ class Node {
     }
 
     if (receivedAccepted[seqNum].size() > 0) {
-      assert(receivedAccepted[seqNum].cend()->second == message.value);
+      assert(receivedAccepted[seqNum].begin()->second == message.value);
     }
 
     receivedAccepted[seqNum][message.fromId] = message.value;
