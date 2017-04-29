@@ -80,10 +80,14 @@ class PaxosEmulator {
         }
         break;
       case PROMISE:
-        int promiseCount = node.receivePromise(message.sequenceNumber, message.fromId, message.value);
-        if (promiseCount > nodeCount / 2) {
+        std::pair<int, std::string> receivedPromises = node.receivePromise(message);
+        if (receivedPromises.first > nodeCount / 2) {
+          std::string proposingValue = node.toString();
+          if (receivedPromises.second != "") {
+            proposingValue = receivedPromises.second;
+          }
           for (Node &toNode : this->nodes) {
-            Message reply(node.getId(), toNode.getId(), message.sequenceNumber, ACCEPT, node.toString());
+            Message reply(node.getId(), toNode.getId(), message.sequenceNumber, ACCEPT, proposingValue);
             sendMessage(sometimeInFuture(), reply);
           }
         }

@@ -10,6 +10,7 @@
 #include <string>
 #include <stdlib.h>
 #include <unordered_map>
+#include <map>
 
 #define PROPOSE_PROBABILITY 0.2
 
@@ -30,8 +31,12 @@ class Node {
   SequenceNumberProvider &seqProvider;
   long timeSinceLastPropose;
   int highestPromisedSeq;
-  std::unordered_map<int, std::unordered_map<int, std::string> > receivedPromises;
-  std::pair<int, std::string> latestAccepted; // <seqNum, value>
+
+  // seqNum -> acceptedSeqNum-> acceptedValue
+  std::unordered_map<int, std::map<int, std::string> > receivedPromises;
+
+  // <seqNum, value>
+  std::pair<int, std::string> latestAccepted;
 
  public:
   Node(int _id, SequenceNumberProvider &_seqProvider) :
@@ -96,14 +101,15 @@ class Node {
 
 
   /**
-   * @return the total number of received promises for a sequence number.
+   * @return <# of received promises, latest accepted value>
    */
-  int receivePromise(int seqNum, int nodeId, std::string value) {
+  std::pair<int, std::string> receivePromise(const Message &promise) {
+    int seqNum = promise.sequenceNumber;
     if (receivedPromises.find(seqNum) == receivedPromises.end()) {
-      receivedPromises[seqNum] = std::unordered_map<int, std::string>();
+      receivedPromises[seqNum] = std::map<int, std::string>();
     }
-    receivedPromises[seqNum][nodeId] = value;
-    return receivedPromises[seqNum].size();
+    receivedPromises[seqNum][promise.acceptedSeqNum] = promise.acceptedValue;
+    return std::make_pair(receivedPromises[seqNum].size(), receivedPromises[seqNum].cbegin()->second);
   }
 
   std::string toString() const {
