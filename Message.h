@@ -20,23 +20,32 @@ static const std::string MessageTypeString[] = {
 };
 
 struct Message {
-  const Node &from;
-  const Node &to;
-  const long sequenceNumber;
-  const MessageType type;
-  const std::string value;
+  Node *from;
+  Node *to;
+  bool isToAll;
+  long sequenceNumber;
+  MessageType type;
+  std::string value;
+
+  Message(Node* _from,
+          Node* _to,
+          bool _isToAll,
+          long _seq,
+          MessageType _type,
+          std::string _value) :
+    from(_from), to(_to), isToAll(_isToAll), sequenceNumber(_seq), type(_type), value(_value) {}
 
   std::string messageSentLog() {
     std::ostringstream logStream;
-    logStream << "Node" << from.toString() << " sent a " << toString()
-              << " messgae to Node " << to.toString();
+    logStream << "Node" << from->toString() << " sent a " << toString()
+              << " messgae to Node " << to->toString();
     return logStream.str();
   }
 
   std::string messageReceivedLog() {
     std::ostringstream logStream;
-    logStream << "Node" << to.toString() << " received a " << toString()
-              << " messgae from Node " << from.toString();
+    logStream << "Node" << to->toString() << " received a " << toString()
+              << " messgae from Node " << from->toString();
     return logStream.str();
   }
 
