@@ -1,7 +1,6 @@
 #ifndef __MESSAGE__
 #define __MESSAGE__
 
-#include "Node.h"
 #include <string>
 #include <sstream>
 
@@ -20,33 +19,25 @@ static const std::string MessageTypeString[] = {
 };
 
 struct Message {
-  Node *from;
-  Node *to;
+  int fromId;
+  int toId;
   bool isToAll;
   long sequenceNumber;
   MessageType type;
   std::string value;
 
-  Message(Node* _from,
-          Node* _to,
+  Message(int _fromId,
+          int  _toId,
           bool _isToAll,
           long _seq,
           MessageType _type,
-          std::string _value) :
-    from(_from), to(_to), isToAll(_isToAll), sequenceNumber(_seq), type(_type), value(_value) {}
-
-  std::string messageSentLog() {
-    std::ostringstream logStream;
-    logStream << "Node" << from->toString() << " sent a " << toString()
-              << " messgae to Node " << to->toString();
-    return logStream.str();
-  }
-
-  std::string messageReceivedLog() {
-    std::ostringstream logStream;
-    logStream << "Node" << to->toString() << " received a " << toString()
-              << " messgae from Node " << from->toString();
-    return logStream.str();
+          std::string _value) {
+    this->fromId = _fromId;
+    this->toId = _toId;
+    this->isToAll = _isToAll;
+    this->sequenceNumber = _seq;
+    this->type = _type;
+    this->value = _value;
   }
 
   /**
@@ -54,7 +45,8 @@ struct Message {
    */
   std::string toString() {
     std::ostringstream info;
-    info << MessageTypeString[type] << ":::" << sequenceNumber << ":::" << value;
+    info << "Node " << fromId << " --> Node " << toId << ": "
+         << MessageTypeString[type] << ":::" << sequenceNumber << ":::" << value;
     return info.str();
   }
 };

@@ -14,7 +14,7 @@ class SequenceNumberProvider {
   SequenceNumberProvider() : counter(0) {
   }
 
-  long getNextNumber() {
+  long get() {
     return counter++;
   }
 };
