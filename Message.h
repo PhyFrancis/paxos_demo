@@ -51,6 +51,10 @@ struct Message {
     return ret;
   }
 
+  static Message acceptedMessage(int _fromId, int _toId, long _seq, std::string value) {
+    return Message(_fromId, _toId, _seq, ACCEPTED, value);
+  }
+
   /**
    * @return ${type}:::${seq}:::${value}
    */

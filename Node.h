@@ -1,7 +1,6 @@
 #ifndef __NODE__
 #define __NODE__
 
-#include "SequenceNumberProvider.h"
 #include "Message.h"
 
 #include <assert.h>
@@ -28,7 +27,6 @@ class Node {
  private:
   const int id;
   NodeState state;
-  SequenceNumberProvider &seqProvider;
   long timeSinceLastPropose;
   int highestPromisedSeq;
 
@@ -36,11 +34,15 @@ class Node {
   std::unordered_map<int, std::map<int, std::string> > receivedPromises;
 
   // <seqNum, value>
-  std::pair<int, std::string> latestAccepted;
+  std::pair<long, std::string> latestAccepted;
+
+  // seqNum -> nodeId -> accepted value
+  std::unordered_map<int, std::unordered_map<int, std::string> > receivedAccepted;
+
+  std::string consensusValue;
 
  public:
-  Node(int _id, SequenceNumberProvider &_seqProvider) :
-    id(_id), seqProvider(_seqProvider) {
+  Node(int _id) : id(_id) {
       state = IDLE;
       timeSinceLastPropose = 0;
       highestPromisedSeq = -1;
@@ -82,15 +84,12 @@ class Node {
     return highestPromisedSeq <  message.sequenceNumber;
   }
 
-  /**
-   * @param message: a prepare message.
-   */
-  Message promise(const Message &message) {
-    assert(this->id == message.toId);
+  Message receivePrepare(const Message &prepare) {
+    assert(this->id == prepare.toId);
     return Message::promiseMessage(
         this->id,
-        message.fromId,
-        message.sequenceNumber,
+        prepare.fromId,
+        prepare.sequenceNumber,
         this->latestAccepted.first,
         this->latestAccepted.second);
   }
@@ -98,7 +97,6 @@ class Node {
   int getPromisedSeq() {
     return highestPromisedSeq;
   }
-
 
   /**
    * @return <# of received promises, latest accepted value>
@@ -110,6 +108,34 @@ class Node {
     }
     receivedPromises[seqNum][promise.acceptedSeqNum] = promise.acceptedValue;
     return std::make_pair(receivedPromises[seqNum].size(), receivedPromises[seqNum].cbegin()->second);
+  }
+
+  bool shouldAccept(const Message &accept) {
+    return accept.sequenceNumber > this->highestPromisedSeq;
+  }
+
+  Message receiveAccept(const Message &accept) {
+    assert(accept.sequenceNumber > this->highestPromisedSeq);
+    assert(accept.toId == this->id);
+    this->latestAccepted = std::make_pair(accept.sequenceNumber, accept.value);
+    return Message::acceptedMessage(this->id, accept.fromId, accept.sequenceNumber, accept.value);
+  }
+
+  /**
+   * @return <# of received accpted message, value>
+   */
+  std::pair<int, std::string> receiveAccepted(const Message &message) {
+    long seqNum = message.sequenceNumber;
+    if (receivedAccepted.find(seqNum) == receivedAccepted.end()) {
+      receivedAccepted[seqNum] = std::unordered_map<int, std::string>();
+    }
+
+    if (receivedAccepted[seqNum].size() > 0) {
+      assert(receivedAccepted[seqNum].cend()->second == message.value);
+    }
+
+    receivedAccepted[seqNum][message.fromId] = message.value;
+    return std::make_pair(receivedAccepted[seqNum].size(), message.value);
   }
 
   std::string toString() const {

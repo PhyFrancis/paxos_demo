@@ -75,20 +75,38 @@ class PaxosEmulator {
     switch (message.type) {
       case PREPARE:
         if (node.shouldPromise(message)) {
-          Message promise = node.promise(message);
+          Message promise = node.receivePrepare(message);
           sendMessage(sometimeInFuture(), promise);
         }
         break;
       case PROMISE:
-        std::pair<int, std::string> receivedPromises = node.receivePromise(message);
-        if (receivedPromises.first > nodeCount / 2) {
-          std::string proposingValue = node.toString();
-          if (receivedPromises.second != "") {
-            proposingValue = receivedPromises.second;
+        {
+          std::pair<int, std::string> receivedPromises = node.receivePromise(message);
+          if (receivedPromises.first > nodeCount / 2) {
+            std::string proposingValue = node.toString();
+            if (receivedPromises.second != "") {
+              proposingValue = receivedPromises.second;
+            }
+            for (Node &toNode : this->nodes) {
+              Message reply(node.getId(), toNode.getId(), message.sequenceNumber, ACCEPT, proposingValue);
+              sendMessage(sometimeInFuture(), reply);
+            }
           }
-          for (Node &toNode : this->nodes) {
-            Message reply(node.getId(), toNode.getId(), message.sequenceNumber, ACCEPT, proposingValue);
-            sendMessage(sometimeInFuture(), reply);
+        }
+        break;
+      case ACCEPT:
+        if (node.shouldAccept(message)) {
+          Message accepted = node.receiveAccept(message);
+          sendMessage(sometimeInFuture(), accepted);
+        }
+        break;
+      case ACCEPTED:
+        if (node.isInPaxos()) {
+          std::pair<int, std::string> accepted = node.receiveAccepted(message);
+          if (accepted.first > nodeCount / 2) {
+            std::cout << "Consensus is reached on node " << node.getId()
+                      << " with value " << accepted.second << std::endl;
+            node.setState(IDLE);
           }
         }
         break;
@@ -108,7 +126,7 @@ class PaxosEmulator {
   void init(int numNodes) {
     currentTime = 0;
     for (int i = 0; i < numNodes; i++) {
-      nodes.push_back(Node(i, seqProvider));
+      nodes.push_back(Node(i));
     }
     nodeCount = nodes.size();
     std::cout<< "Paxos emulator initialized, total number of agents = "
