@@ -22,14 +22,16 @@ class Node {
  private:
   const int id;
   NodeState state;
-  long timeSinceLastPropose;
   SequenceNumberProvider &seqProvider;
+  long timeSinceLastPropose;
+  int highestPromisedSeq;
 
  public:
   Node(int _id, SequenceNumberProvider &_seqProvider) :
     id(_id), seqProvider(_seqProvider) {
       state = IDLE;
       timeSinceLastPropose = 0;
+      highestPromisedSeq = -1;
       std::cout << "Node " << toString() << " is created" << std::endl;
   }
 
@@ -60,7 +62,20 @@ class Node {
         PROPOSE_PROBABILITY * timeSinceLastPropose > (rand() % 100) / 100.0;
   }
 
-  void processMessage() {
+  /**
+   * @return true if promised, false if no.
+   */
+  bool maybePromise(int seqNum) {
+    if (highestPromisedSeq > seqNum) {
+      return false;
+    } else {
+      highestPromisedSeq = seqNum;
+      return true;
+    }
+  }
+
+  int getPromisedSeq() {
+    return highestPromisedSeq;
   }
 
   std::string toString() const {
