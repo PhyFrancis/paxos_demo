@@ -4,9 +4,12 @@
 #include "SequenceNumberProvider.h"
 #include "Message.h"
 
+#include <assert.h>
 #include <iostream>
+#include <utility>
 #include <string>
 #include <stdlib.h>
+#include <unordered_map>
 
 #define PROPOSE_PROBABILITY 0.2
 
@@ -15,7 +18,9 @@ enum NodeState {
   IN_PAXOS,
 };
 
-// TODO add node role (proposer, acceptor, learner)
+// TODO
+// - [ ] add node role (proposer, acceptor, learner).
+// - [ ] don't propose if there is any activity from outside.
 
 class Node {
 
@@ -25,6 +30,8 @@ class Node {
   SequenceNumberProvider &seqProvider;
   long timeSinceLastPropose;
   int highestPromisedSeq;
+  std::unordered_map<int, std::unordered_map<int, std::string> > receivedPromises;
+  std::pair<int, std::string> latestAccepted; // <seqNum, value>
 
  public:
   Node(int _id, SequenceNumberProvider &_seqProvider) :
@@ -32,6 +39,7 @@ class Node {
       state = IDLE;
       timeSinceLastPropose = 0;
       highestPromisedSeq = -1;
+      latestAccepted = std::make_pair(-1, "");
       std::cout << "Node " << toString() << " is created" << std::endl;
   }
 
@@ -63,19 +71,39 @@ class Node {
   }
 
   /**
-   * @return true if promised, false if no.
+   * @param message: a prepare message.
    */
-  bool maybePromise(int seqNum) {
-    if (highestPromisedSeq > seqNum) {
-      return false;
-    } else {
-      highestPromisedSeq = seqNum;
-      return true;
-    }
+  bool shouldPromise(const Message &message) {
+    return highestPromisedSeq <  message.sequenceNumber;
+  }
+
+  /**
+   * @param message: a prepare message.
+   */
+  Message promise(const Message &message) {
+    assert(this->id == message.toId);
+    return Message::promiseMessage(
+        this->id,
+        message.fromId,
+        message.sequenceNumber,
+        this->latestAccepted.first,
+        this->latestAccepted.second);
   }
 
   int getPromisedSeq() {
     return highestPromisedSeq;
+  }
+
+
+  /**
+   * @return the total number of received promises for a sequence number.
+   */
+  int receivePromise(int seqNum, int nodeId, std::string value) {
+    if (receivedPromises.find(seqNum) == receivedPromises.end()) {
+      receivedPromises[seqNum] = std::unordered_map<int, std::string>();
+    }
+    receivedPromises[seqNum][nodeId] = value;
+    return receivedPromises[seqNum].size();
   }
 
   std::string toString() const {

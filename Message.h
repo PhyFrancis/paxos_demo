@@ -24,6 +24,8 @@ struct Message {
   long sequenceNumber;
   MessageType type;
   std::string value;
+  int acceptedSeqNum;
+  std::string acceptedValue;
 
   Message(int _fromId,
           int  _toId,
@@ -35,6 +37,18 @@ struct Message {
     this->sequenceNumber = _seq;
     this->type = _type;
     this->value = _value;
+  }
+
+  // For promise type
+  static Message promiseMessage(int _fromId,
+          int  _toId,
+          long _seq,
+          int _acceptedSeqNum,
+          std::string _acceptedValue) {
+    Message ret(_fromId, _toId, _seq, PROMISE, "");
+    ret.acceptedSeqNum = _acceptedSeqNum;
+    ret.acceptedValue = _acceptedValue;
+    return ret;
   }
 
   /**

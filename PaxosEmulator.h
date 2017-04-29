@@ -74,9 +74,18 @@ class PaxosEmulator {
     Node &node = nodes[message.toId];
     switch (message.type) {
       case PREPARE:
-        if (node.maybePromise(message.sequenceNumber)) {
-          Message reply(message.toId, message.fromId, node.getPromisedSeq(), PROMISE, "");
-          sendMessage(sometimeInFuture(), reply);
+        if (node.shouldPromise(message)) {
+          Message promise = node.promise(message);
+          sendMessage(sometimeInFuture(), promise);
+        }
+        break;
+      case PROMISE:
+        int promiseCount = node.receivePromise(message.sequenceNumber, message.fromId, message.value);
+        if (promiseCount > nodeCount / 2) {
+          for (Node &toNode : this->nodes) {
+            Message reply(node.getId(), toNode.getId(), message.sequenceNumber, ACCEPT, node.toString());
+            sendMessage(sometimeInFuture(), reply);
+          }
         }
         break;
     }
