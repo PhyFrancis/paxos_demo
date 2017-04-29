@@ -1,7 +1,6 @@
 #ifndef __NODE__
 #define __NODE__
 
-#include "PaxosEmulator.h"
 #include "SequenceNumberProvider.h"
 
 #include <iostream>
@@ -19,32 +18,29 @@ class Node {
  private:
   const int id;
   NodeState state;
-  long currentTime;
-  long lastActiveTime;
-
+  long timeSinceLastPropose;
   SequenceNumberProvider &seqProvider;
-  PaxosEmulator &emulator;
 
  public:
-  Node(int _id, SequenceNumberProvider &_seqProvider, PaxosEmulator &_emulator) :
-    id(_id), state(IDLE), currentTime(0), lastActiveTime(0),
-    seqProvider(_seqProvider), emulator(_emulator) {
-    std::cout << "Node " << toString() << " is created" << std::endl;
+  Node(int _id, SequenceNumberProvider &_seqProvider) :
+    id(_id), seqProvider(_seqProvider) {
+      state = IDLE;
+      timeSinceLastPropose = 0;
+      std::cout << "Node " << toString() << " is created" << std::endl;
   }
 
-  void startPaxos() {
-    state = IN_PAXOS;
+  NodeState getState();
+
+  void setState(NodeState newState) {
+    state = newState;
   }
 
   bool isInPaxos() const {
     return state == IN_PAXOS;
   }
 
-  void tickClock() {
-    currentTime++;
+  void processMessage() {
   }
-
-  NodeState getState();
 
   std::string toString() const {
     return std::to_string(this->id);

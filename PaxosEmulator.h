@@ -34,9 +34,6 @@ class PaxosEmulator {
   }
 
   void tickClock() {
-    for (Node& node : nodes) {
-      node.tickClock();
-    }
     currentTime++;
   }
 
@@ -54,14 +51,14 @@ class PaxosEmulator {
   void init(int numNodes) {
     currentTime = 0;
     for (int i = 0; i < numNodes; i++) {
-      nodes.push_back(Node(i, seqProvider, this));
+      nodes.push_back(Node(i, seqProvider));
     }
     nodeCount = nodes.size();
   }
 
   void startPaxos() {
     for (Node &node : nodes) {
-      node.startPaxos();
+      node.setState(IN_PAXOS);
     }
     runLoop();
   }
